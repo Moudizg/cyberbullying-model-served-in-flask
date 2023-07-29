@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cyberbullying Detection</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+    <!-- jQuery library -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-md-center">
+            <div class="col-md-6">
+                <h1 class="text-center">Cyberbullying Detection</h1>
+                <form id="predict-form" method="post">
+                    <div class="form-group">
+                        <textarea class="form-control" id="text-input" name="text" rows="4"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <input type="submit" class="btn btn-primary" value="Submit">
+                    </div>
+                </form>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div id="model-result" class="alert" role="alert" style="display: none;"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <div id="gpt3-result" class="alert" role="alert" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function vote_cast(input_text, model_prediction, gpt3_prediction, vote) {
+            // The data to send in the POST request
+            var dataToSend = {
+                text: input_text,
+                model_prediction: model_prediction,
+                gpt3_prediction: gpt3_prediction,
+                vote: vote
+            };
+
+            // The POST request
+            $.ajax({
+                url: '/cast_vote',
+                method: 'POST',
+                data: JSON.stringify(dataToSend),
+                contentType: 'application/json',
+                success: function(data){
+                    alert('Vote successfully cast!');
+                },
+                error: function(error){
+                    alert('An error occurred while casting the vote.');
+                }
+            });
+        }
+
+
+        $(document).ready(function(){
+            $('#predict-form').on('submit', function(e){
+                e.preventDefault();
+
+                $.ajax({
+                    url: '/predict',
+                    method: 'POST',
+                    data: $(this).serialize(),
+                    success: function(data){
+                        var model_prediction = data.model_prediction;
+                        var gpt3_prediction = data.gpt3_prediction;
+
+                        $('#model-result').html('Model Prediction: ' + model_prediction);
+                        $('#model-result').addClass('alert-info');
+                        $('#model-result').show();
+                        $('#model-result').click(function() {
+                            // call vote_cast and send the inputted text, the prediction of both models, and the users vote
+                            text = $('#text-input').val();
+                            
+                            vote_cast(text, model_prediction, gpt3_prediction, 'model');
+
+                        });
+
+                        $('#gpt3-result').html('GPT-3 Prediction: ' + gpt3_prediction);
+                        $('#gpt3-result').addClass('alert-info');
+                        $('#gpt3-result').show();
+                        $('#gpt3-result').click(function() {
+                            // call vote_cast and send the inputted text, the prediction of both models, and the users vote
+                            text = $('#text-input').val();
+                            vote_cast(text, model_prediction, gpt3_prediction, 'gpt-3');
+                        });
+                    },
+                    error: function(error){
+                        $('#model-result').html('An error occurred.');
+                        $('#model-result').addClass('alert-danger');
+                        $('#model-result').show();
+                        $('#gpt3-result').html('');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
